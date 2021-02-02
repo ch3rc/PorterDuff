@@ -6,12 +6,16 @@ File:       porter-duff.py
 Desc:       Provide to images and perform porter/duff operations
             clear, copy, over, in, out, atop, xor
 """
-
 import getopt
 import sys
 import os
 import cv2 as cv
 import numpy as np
+from pd_over import over
+from pd_in import In
+from pd_out import out
+from pd_atop import atop
+from pd_xor import xor
 
 
 def help():
@@ -23,6 +27,14 @@ def help():
     print("[mask2]: mask of destination picture")
     print("If no mask is provided then a mask of non-zero pixels will be created")
     print("If no pictures provided then a square and cross will be drawn and operations will be performed on them")
+
+
+def search(filename, directory):
+    results = []
+    for root, dirs, files in os.walk(directory):
+        if filename in files:
+            results.append(os.path.join(root, filename))
+    return results[0]
 
 
 def create_objects():
@@ -75,19 +87,45 @@ def create_objects():
     return circle, rectangle
 
 
-def clear(img):
-    output = np.zeros(img.shape, dtype=img.dtype)
+def clear(img_1, img_2):
+    img1_ = np.zeros((480, 640, 3), dtype=img_1.dtype)
+    img2_ = np.zeros((480, 640, 3), dtype=img_2.dtype)
+    output = np.hstack((img1_, img2_))
     return output
 
 
-def copy(img):
-    output = np.copy(img)
+def copy(img_1, img_2):
+    img1_ = np.copy(img_1)
+    img2_ = np.copy(img_2)
+    img1_ = cv.resize(img1_, (640, 480), interpolation=cv.INTER_CUBIC)
+    img2_ = cv.resize(img2_, (640, 480), interpolation=cv.INTER_CUBIC)
+    output = np.hstack((img1_, img2_))
     return output
 
 
-
-def run_operations(img_1, img_2, m_1=None, m_2=None):
-    pass
+def run_operations(img_1, img_2, m_1=None, m_2=None, flag=False):
+    img_clear = clear(img_1, img_2)
+    img_copy = copy(img_1, img_2)
+    img_over = over(img_1, img_2, m_1, m_2, flag)
+    img_in = In(img_1, img_2, m_1, m_2, flag)
+    img_out = out(img_1, img_2, m_1, m_2, flag)
+    img_atop = atop(img_1, img_2, m_1, m_2, flag)
+    img_xor = xor(img_1, img_2, m_1, m_2, flag)
+    cv.imshow("clear", img_clear)
+    cv.waitKey(0)
+    cv.imshow("copy", img_copy)
+    cv.waitKey(0)
+    cv.imshow("img_over", img_over)
+    cv.waitKey(0)
+    cv.imshow("in", img_in)
+    cv.waitKey(0)
+    cv.imshow("out", img_out)
+    cv.waitKey(0)
+    cv.imshow("atop", img_atop)
+    cv.waitKey(0)
+    cv.imshow("xor", img_xor)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 def main():
@@ -96,7 +134,9 @@ def main():
     image_2 = None
     mask_1 = None
     mask_2 = None
-
+    flag = False
+    path = "C:\\Users\\codyh\\Desktop\\Test Pics"
+    path = os.path.abspath(path)
     try:
         opts, args = getopt.getopt(sys.argv[1:], "h", ["help"])
     except getopt.GetoptError as err:
@@ -112,26 +152,25 @@ def main():
     if len(args) > 4:
         print("Too many arguments provided")
     elif len(args) == 4:
-        image_1 = args[0]
-        image_2 = args[1]
-        mask_1 = args[2]
-        mask_2 = args[3]
-        run_operations(image_1, image_2, m_1=mask_1, m_2=mask_2)
-    elif len(args) == 3:
-        image_1 = args[0]
-        image_2 = args[1]
-        mask_1 = args[2]
-        run_operations(image_1, image_2, m_1=mask_1, m_2=None)
+        image_1 = search(args[0], path)
+        image_2 = search(args[1], path)
+        mask_1 = search(args[2], path)
+        mask_2 = search(args[3], path)
+        run_operations(image_1, image_2, m_1=mask_1, m_2=mask_2, flag=flag)
     elif len(args) == 2:
-        image_1 = args[0]
-        image_2 = args[1]
-        run_operations(image_1, image_2, m_1=None, m_2=None)
+        print("in here!")
+        image_1 = search(args[0], path)
+        image_2 = search(args[1], path)
+        image_1 = cv.imread(image_1)
+        image_2 = cv.imread(image_2)
+        run_operations(image_1, image_2, m_1=None, m_2=None, flag=flag)
     elif len(args) == 1:
         print("Too few arguments passed")
-    else:
+    elif len(args) == 0:
+        flag = True
         circle, cross = create_objects()
-        run_operations(circle, cross, m_1=None, m_2=None)
+        run_operations(circle, cross, m_1=None, m_2=None, flag=flag)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

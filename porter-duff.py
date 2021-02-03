@@ -88,6 +88,7 @@ def create_objects():
 
 
 def clear(img_1, img_2):
+    # Create images of all zeros
     img1_ = np.zeros((480, 640, 3), dtype=img_1.dtype)
     img2_ = np.zeros((480, 640, 3), dtype=img_2.dtype)
     output = np.hstack((img1_, img2_))
@@ -95,6 +96,7 @@ def clear(img_1, img_2):
 
 
 def copy(img_1, img_2):
+    # Copy of input images
     img1_ = np.copy(img_1)
     img2_ = np.copy(img_2)
     img1_ = cv.resize(img1_, (640, 480), interpolation=cv.INTER_CUBIC)
@@ -156,14 +158,23 @@ def main():
         image_2 = search(args[1], path)
         mask_1 = search(args[2], path)
         mask_2 = search(args[3], path)
-        run_operations(image_1, image_2, m_1=mask_1, m_2=mask_2, flag=flag)
+        try:
+            image_1 = cv.imread(image_1)
+            image_2 = cv.imread(image_2)
+            mask_1 = cv.imread(mask_1)
+            mask_2 = cv.imread(mask_2, -1)
+            run_operations(image_1, image_2, m_1=mask_1, m_2=mask_2, flag=flag)
+        except cv.error as e:
+            print(e)
     elif len(args) == 2:
-        print("in here!")
         image_1 = search(args[0], path)
         image_2 = search(args[1], path)
-        image_1 = cv.imread(image_1)
-        image_2 = cv.imread(image_2)
-        run_operations(image_1, image_2, m_1=None, m_2=None, flag=flag)
+        try:
+            image_1 = cv.imread(image_1)
+            image_2 = cv.imread(image_2)
+            run_operations(image_1, image_2, m_1=None, m_2=None, flag=flag)
+        except cv.error as e:
+            print(e)
     elif len(args) == 1:
         print("Too few arguments passed")
     elif len(args) == 0:

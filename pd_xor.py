@@ -1,3 +1,10 @@
+"""
+Author:     Cody Hawkins
+Class:      CompSci 6420
+Date:       1/29/2021
+File:       pd_xor.py
+Desc:       Show src xor dest or dest xor src
+"""
 import cv2 as cv
 import numpy as np
 
@@ -5,6 +12,7 @@ import numpy as np
 def xor(img_1, img_2, alpha_1, alpha_2, flag):
 
     if flag:
+        # Operations for drawn images
         gray_1 = cv.cvtColor(img_1, cv.COLOR_BGR2GRAY)
         gray_2 = cv.cvtColor(img_2, cv.COLOR_BGR2GRAY)
 
@@ -22,27 +30,36 @@ def xor(img_1, img_2, alpha_1, alpha_2, flag):
 
         output = np.hstack((img1_/255, img2_/255))
 
-    if alpha_1 is None and alpha_2 is None and flag is False:
+    if flag is False:
+        # operations for input images/masks
         img_1 = cv.resize(img_1, (640, 480), interpolation=cv.INTER_CUBIC)
+
         img_2 = cv.resize(img_2, (640, 480), interpolation=cv.INTER_CUBIC)
-        # set upper and lower boundaries for green screen
-        lower = np.array([0, 100, 0])
 
-        upper = np.array([150, 255, 100])
+        if alpha_1 is None and alpha_2 is None:
+            # Create masks
+            lower = np.array([0, 100, 0])
 
-        mask = cv.inRange(img_1, lower, upper)
+            upper = np.array([150, 255, 100])
 
-        black = np.zeros_like(img_1)
+            mask = cv.inRange(img_1, lower, upper)
 
-        black[mask == 0] = 255
+            black = np.zeros_like(img_1)
 
-        black = black / 255
+            black[mask == 0] = 255
 
-        gray_b = cv.cvtColor(img_2, cv.COLOR_BGR2GRAY)
-        _, field = cv.threshold(gray_b, 225, 255, cv.THRESH_BINARY_INV)
+            gray_b = cv.cvtColor(img_2, cv.COLOR_BGR2GRAY)
+            _, field = cv.threshold(gray_b, 225, 255, cv.THRESH_BINARY_INV)
+
+            black = black / 255
+            field = field / 255
+
+        if alpha_1 is not None and alpha_2 is not None:
+            # Set masks as known variables
+            black = alpha_1 / 255
+            field = alpha_2 / 255
 
         field = cv.merge((field, field, field))
-        field = field / 255
 
         img1_ = img_1 * black * (1 - field) + img_2 * (1 - black) * field
         img2_ = img_2 * field * (1 - black) + img_1 * (1 - field) * black
